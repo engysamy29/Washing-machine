@@ -1,0 +1,39 @@
+MODULE main
+
+VAR
+
+start: boolean;
+reset: boolean;
+open: boolean;
+close: boolean;
+complete: boolean;
+dry: boolean;
+
+WashingMachineState: {Ready,Error,Washing, Drying};
+
+ASSIGN
+
+init(WashingMachineState):= Ready;
+
+
+next(WashingMachineState):= 
+	case
+		WashingMachineState= Ready & start & open: Error;
+		WashingMachineState= Ready & start & close : Washing;
+		WashingMachineState= Ready & dry & close : Drying;
+		WashingMachineState= Error & reset: Ready;
+		WashingMachineState= Washing & open : Error;
+		WashingMachineState= Washing & complete: Ready;
+		WashingMachineState= Washing & complete & dry & close: Drying;
+		WashingMachineState= Drying & open : Error;
+		WashingMachineState= Drying & complete : Ready;
+		TRUE: WashingMachineState;
+	esac;
+
+SPEC AG(complete -> EF(WashingMachineState=Ready))
+SPEC AF((open & start) -> AX(WashingMachineState=Error))
+SPEC AF((dry & complete & WashingMachineState=Washing ) -> AX(WashingMachineState=Drying))
+SPEC AF((dry & close & WashingMachineState=Ready ) -> AX(WashingMachineState=Drying))
+SPEC AG(EF WashingMachineState=Washing)
+SPEC AG(EF WashingMachineState=Error)
+SPEC AG(EF !complete)
